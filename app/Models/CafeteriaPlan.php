@@ -54,6 +54,7 @@ class CafeteriaPlan extends Model
 
     const SAVE_SUCCESS = 'Success DB save!';
     const XML_SUCCESS = 'Your XML file successfully generated!';
+    const CSV_SUCCESS = 'Your CSV file successfully generated!';
     const ERROR = 'Error!';
 
     

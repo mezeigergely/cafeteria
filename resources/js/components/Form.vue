@@ -4,6 +4,7 @@ import CalculateButton from './buttons/Calculate.vue';
 import ResetButton from './buttons/Reset.vue';
 import XmlButton from './buttons/Xml.vue';
 import SaveButton from './buttons/Save.vue';
+import CsvButton from './buttons/Csv.vue';
 import Table from './Table.vue';
 import Swal from 'sweetalert2';
 
@@ -61,6 +62,11 @@ const onReset = () => {
 
 const onGenerateXml = async () => {
     let response = await axios.post('/generate_xml',formData);
+    swal(response);
+}
+
+const onGenerateCsv = async () => {
+    let response = await axios.post('/generate_csv',formData);
     swal(response);
 }
 
@@ -131,6 +137,7 @@ const swal = (response) => {
             <div class="d-flex justify-content-center mb-4">
                 <ResetButton @click="onReset" />
                 <XmlButton @click="onGenerateXml" />
+                <CsvButton @click="onGenerateCsv" />
                 <SaveButton @click="onSave" />
             </div>
             <div class="d-flex justify-content-center mb-4">

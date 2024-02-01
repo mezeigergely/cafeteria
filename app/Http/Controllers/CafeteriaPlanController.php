@@ -51,15 +51,29 @@ class CafeteriaPlanController extends Controller
     {
         list($pocketsBudgetAnnual, $pocketsBudgetMonthly) = $this->getPocketsBudgetFromRequest($request);
 
-        $data = $this->cafeteriaPlanService->transformPlanDataForXml($pocketsBudgetAnnual, $pocketsBudgetMonthly);
+        $data = $this->cafeteriaPlanService->transformPlanDataForXmlOrCsv($pocketsBudgetAnnual, $pocketsBudgetMonthly);
         $xmlContent = $this->cafeteriaPlanService->generateXmlFromData($data);
 
-        $filename = $this->cafeteriaPlanService->generateXmlFilename();
+        $filename = $this->cafeteriaPlanService->generateFilename('xml');
 
         $filePath = $this->cafeteriaPlanService->getXmlFilePath($filename);
 
         if($this->cafeteriaPlanService->saveXml($filename, $xmlContent)){
-            return response()->json(['filePath' => $filePath, 'filename' => $filename, 'message' => CafeteriaPlan::XML_SUCCESS],200);
+            return response()->json(['message' => CafeteriaPlan::XML_SUCCESS],200);
+        }
+
+        return response()->json(['message' => CafeteriaPlan::ERROR]);
+    }
+
+    public function generateCsv(CafeteriaPlanRequest $request)
+    {
+        list($pocketsBudgetAnnual, $pocketsBudgetMonthly) = $this->getPocketsBudgetFromRequest($request);
+        $data = $this->cafeteriaPlanService->transformPlanDataForXmlOrCsv($pocketsBudgetAnnual, $pocketsBudgetMonthly);
+
+        $filename = $this->cafeteriaPlanService->generateFilename('csv');
+
+        if($this->cafeteriaPlanService->generateCsv($filename, $data)){
+            return response()->json(['message' => CafeteriaPlan::CSV_SUCCESS],200);
         }
 
         return response()->json(['message' => CafeteriaPlan::ERROR]);

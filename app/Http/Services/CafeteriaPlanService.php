@@ -3,7 +3,7 @@
 namespace App\Http\Services;
 
 use App\Models\CafeteriaPlan;
-use Illuminate\Support\Str;
+use Exception;
 use Illuminate\Support\Facades\Storage;
 
 class CafeteriaPlanService
@@ -16,7 +16,7 @@ class CafeteriaPlanService
         return $resultArray;
     }
     
-    public function transformPlanDataForXml($pocketsBudgetAnnual, $pocketsBudgetMonthly)
+    public function transformPlanDataForXmlOrCsv($pocketsBudgetAnnual, $pocketsBudgetMonthly)
     {
         $data = [
             'pocketsBudgetAnnual' => explode(',', $pocketsBudgetAnnual),
@@ -58,9 +58,31 @@ class CafeteriaPlanService
         return $xml->asXML();
     }
 
-    public function generateXmlFilename()
+    public function generateCsv($filename, $data)
     {
-        return 'generated_xml_' . Str::random(10) . '.xml';
+        try {
+            $handle = fopen(storage_path($filename), 'w');
+            fputcsv($handle, ['Pocket', 'YearlyAmount', 'MonthlyAmount']);
+
+            foreach ($data['pocketsBudgetAnnual'] as $index => $yearly) {
+                $monthly = $data['pocketsBudgetMonthly'][$index];
+                $pocket = 'Pocket' . ($index + 1);
+
+                fputcsv($handle, [$pocket, $yearly, $monthly]);
+            }
+
+            fclose($handle);
+
+            return true;
+        } catch (Exception) {
+
+            return false;
+        }
+    }
+
+    public function generateFilename($type)
+    {
+        return 'generated_'.$type.'_' . now()->format('YmdHis') . '.'.$type;
     }
 
     public function saveXml($filename, $xmlContent)
