@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Model;
  * Class CafeteriaPlan
  *
  * @property integer $id
+ * @property json $pockets_budget_annual
+ * @property json $pockets_budget_monthly
  */
 
 class CafeteriaPlan extends Model
 {
     protected $primaryKey = 'id';
-    protected $table = 'cafeteriaPlans';
+    protected $table = 'cafeteria_plans';
+
+    protected $fillable = [
+        'pockets_budget_annual',
+        'pockets_budget_monthly',
+    ];
 
     const CAFETERIA_BUDGET = 400000;
     const POCKET_BUDGET_LIMIT = 200000;
@@ -28,8 +35,21 @@ class CafeteriaPlan extends Model
         self::C_POCKET
     ];
 
+    const CURRENCY = 'HUF';
+
     const MONTHS = [
-        1,2,3,4,5,6,7,8,9,10,11,12
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
     ];
     
 

@@ -1,18 +1,10 @@
 <?php
 
+use App\Http\Controllers\CafeteriaPlanController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+Route::get('/', [CafeteriaPlanController::class, 'index']);
+Route::post('/save', [CafeteriaPlanController::class, 'save'])->name('save');
+Route::post('/xml', [CafeteriaPlanController::class, 'xml'])->name('xml');
+Route::get('/get_plan_data', [CafeteriaPlanController::class, 'getPlanData']);
 
-Route::get('/', function () {
-    return view('welcome');
-});
