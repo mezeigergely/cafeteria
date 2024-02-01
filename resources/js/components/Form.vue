@@ -1,72 +1,109 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import CalculateButton from './buttons/Calculate.vue'
-import ResetButton from './buttons/Reset.vue'
-import XmlButton from './buttons/Xml.vue'
-import SaveButton from './buttons/Save.vue'
-import Table from './Table.vue'
+import { onMounted, ref } from 'vue';
+import CalculateButton from './buttons/Calculate.vue';
+import ResetButton from './buttons/Reset.vue';
+import XmlButton from './buttons/Xml.vue';
+import SaveButton from './buttons/Save.vue';
+import Table from './Table.vue';
+import Swal from 'sweetalert2';
 
-const initialBudget = ref([])
-let remainderBudget = ref([])
-const currency = ref([])
-const pocketBudgetLimit = ref([])
-let pockets = ref([])
-let pocketValues = ref({})
-let pocketValuesArray = ref({})
-let proxyObject = ref({})
-let values = ref([])
-let next = false
-let months = ref([])
+const initialBudget = ref([]);
+let remainderBudget = ref([]);
+const currency = ref([]);
+const pocketBudgetLimit = ref([]);
+let pockets = ref([]);
+let pocketValues = ref([]);
+let pocketValuesDivided12 = ref([]);
+let months = ref([]);
 
-let form = ref([])
+let next = false;
+const formData = new FormData();
 
 onMounted(async () => {
-    getPlanData()
+    getPlanData();
 })
 
-const onNext = async () => {
-    let result = 0
-    proxyObject.value = pocketValues.value
-    const keys = Object.keys(proxyObject.value)
-    for (const key of keys) {
-        values[key] = proxyObject.value[key]
-        result = result + values[key]
+const onNext = () => {
+    let result = 0;
+    const values = {};
+
+    Object.keys(pocketValues.value).forEach(key => {
+        values[key] = pocketValues.value[key];
+        result += values[key];
+    })
+
+    const tempPocketValuesArray = Object.values(values);
+    const isValid = tempPocketValuesArray.every(value => value <= pocketBudgetLimit.value && value > 0) && result <= initialBudget.value;
+
+    if (isValid) {
+        pocketValuesDivided12 = tempPocketValuesArray.map(value => (value / 12).toFixed(2));
+        formData.append('pockets_budget_annual', tempPocketValuesArray);
+        formData.append('pockets_budget_monthly', pocketValuesDivided12);
+        remainderBudget.value = initialBudget.value - result;
+        next = true;
+    } else {
+        next = false;
     }
+}
 
-    const tempPocketValuesArray = Object.values(pocketValues.value)
-    pocketValuesArray = tempPocketValuesArray.map(value => (value / 12).toFixed(2));
+const onSave = async () => {
+    let response = await axios.post('/save',formData);
+    swal(response);
+}
 
-    remainderBudget.value = initialBudget.value - result
-    next = true
+const onReset = () => {
+    remainderBudget.value = initialBudget.value;
+    Object.keys(pocketValues.value).forEach(key => {
+        pocketValues.value[key] = 0;
+    });
+    next = false;
+}
 
-    const formData = new FormData();
-    formData.append('pockets_budget_annual',tempPocketValuesArray)
-    formData.append('pockets_budget_monthly',pocketValuesArray)
-    let response = await axios.post('/save',formData)
+const onGenerateXml = async () => {
+    let response = await axios.post('/generate_xml',formData);
+    swal(response);
 }
 
 const getPlanData = async () => {
-    let response = await axios.get('/get_plan_data')
-    initialBudget.value = response.data.budget
-    remainderBudget.value = initialBudget.value
-    currency.value = response.data.currency
-    pockets.value = response.data.pockets
-    pocketBudgetLimit.value = response.data.pocketBudgetLimit
-    months.value = response.data.months
+    let response = await axios.get('/get_plan_data');
+    initialBudget.value = response.data.budget;
+    remainderBudget.value = initialBudget.value;
+    currency.value = response.data.currency;
+    pockets.value = response.data.pockets;
+    pocketBudgetLimit.value = response.data.pocketBudgetLimit;
+    months.value = response.data.months;
+}
+
+const swal = (response) => {
+    if (response.status === 200) {
+      Swal.fire({
+        icon: 'success',
+        title: response.data.message,
+      })
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: response.data.message,
+      })
+    }
 }
 </script>
 
 <template>
     <div>
-        <div class="d-flex justify-content-center mb-4">
-            <span id="cafeteriaBudget">{{ remainderBudget }}</span>
-            <span id="currency">{{ currency }}</span>
+        <div class="d-flex justify-content-center mb-2">
+            <h4>Your cafeteria budget:</h4>
         </div>
-        <form @submit.prevent="onNext()" class="content">
+        <div class="d-flex justify-content-center mb-5">
+            <h1>{{ remainderBudget }}{{ currency }}</h1>
+        </div>
+        <form @submit.prevent="onNext" class="content">
+            <div class="mb-4">
+                <h4>Your pockets:</h4>
+            </div>
             <div class="row mb-4">
-                <div class="col"></div>
                 <div class="col" v-for="(value, key) in pockets" :key="key">
-                    <div class="d-flex justify-content-center mb-2">{{ value }}</div>
+                    <div class="d-flex justify-content-center mb-2"><h3>{{ value }}</h3></div>
                     <div class="input-group mb-2">
                         <input
                             type="number" class="form-control"
@@ -76,28 +113,29 @@ const getPlanData = async () => {
                         <span class="input-group-text" id="currency">{{ currency }}</span>
                     </div>
                     <div class="d-flex justify-content-center mb-2">
-                        <span>limit: </span>
-                        <span id="pocketBudgetLimit">{{ pocketBudgetLimit }}</span>
-                        <span id="currency">{{ currency }}</span>
+                        <span v-show="pocketValues[(key + 1)] > pocketBudgetLimit" style="color: red;">
+                            The price is more than {{ pocketBudgetLimit }}{{ currency }}.
+                        </span>
+                        <span v-show="pocketValues[(key + 1)] <= 0" style="color: red;">
+                            The price is less than 1 {{ currency }}.
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="d-flex justify-content-center mb-4">
+            <div v-if="!next" class="d-flex justify-content-center mb-4">
                 <CalculateButton />
             </div>
         </form>
-                           
+
         <div v-if="next">
             <div class="d-flex justify-content-center mb-4">
-                <ResetButton />
-                <XmlButton />
-                <SaveButton />
+                <ResetButton @click="onReset" />
+                <XmlButton @click="onGenerateXml" />
+                <SaveButton @click="onSave" />
             </div>
             <div class="d-flex justify-content-center mb-4">
-                <Table :pockets="pockets" :months="months" :pocketValues="pocketValuesArray" />
+                <Table :pockets="pockets" :months="months" :pocketValues="pocketValuesDivided12" />
             </div>
-            
         </div>
     </div>
 </template>
-

@@ -11,12 +11,16 @@
         @vite('resources/css/app.css')
     </head>
     <body>
-        <div id="app">
-            @vite('resources/js/app.js')
-            <div class="container">
-                @csrf
-                <div class="mb-5">CAFETERIA</div>
-                    <form-comp></form-comp>
+        <div class="card w-50 mx-auto">
+            <div class="card-body">
+                <div id="app">
+                    @vite('resources/js/app.js')
+                    <div class="container">
+                        @csrf
+                        <div class="card-title mb-5">CAFETERIA</div>
+                            <form-comp></form-comp>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

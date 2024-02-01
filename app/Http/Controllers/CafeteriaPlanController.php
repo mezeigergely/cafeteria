@@ -22,22 +22,54 @@ class CafeteriaPlanController extends Controller
 
     public function save(CafeteriaPlanRequest $request)
     {
-        $pocketsBudgetAnnual = $request->input('pockets_budget_annual');
-        $pocketsBudgetMonthly = $request->input('pockets_budget_monthly');
+        list($pocketsBudgetAnnual, $pocketsBudgetMonthly) = $this->getPocketsBudgetFromRequest($request);
 
-        $this->cafeteriaPlanService->savePlan($pocketsBudgetAnnual, $pocketsBudgetMonthly);
+        if($this->cafeteriaPlanService->savePlan($pocketsBudgetAnnual, $pocketsBudgetMonthly)){
+            return response()->json(['message' => CafeteriaPlan::SAVE_SUCCESS], 200);
+        }
+
+        return response()->json(['message' => CafeteriaPlan::ERROR]);
+        
     }
 
     public function getPlanData()
     {
-        $responseData = [
+        if($responseData = [
             'budget' => CafeteriaPlan::CAFETERIA_BUDGET,
             'currency' => CafeteriaPlan::CURRENCY,
             'pockets' => CafeteriaPlan::POCKETS,
             'pocketBudgetLimit' => CafeteriaPlan::POCKET_BUDGET_LIMIT,
             'months' => CafeteriaPlan::MONTHS,
-        ];
+        ]){
+            return response()->json($responseData, 200);
+        }
 
-        return response()->json($responseData, 200);
+        return response()->json(['message' => CafeteriaPlan::ERROR]);
+    }
+
+    public function generateXml(CafeteriaPlanRequest $request)
+    {
+        list($pocketsBudgetAnnual, $pocketsBudgetMonthly) = $this->getPocketsBudgetFromRequest($request);
+
+        $data = $this->cafeteriaPlanService->transformPlanDataForXml($pocketsBudgetAnnual, $pocketsBudgetMonthly);
+        $xmlContent = $this->cafeteriaPlanService->generateXmlFromData($data);
+
+        $filename = $this->cafeteriaPlanService->generateXmlFilename();
+
+        $filePath = $this->cafeteriaPlanService->getXmlFilePath($filename);
+
+        if($this->cafeteriaPlanService->saveXml($filename, $xmlContent)){
+            return response()->json(['filePath' => $filePath, 'filename' => $filename, 'message' => CafeteriaPlan::XML_SUCCESS],200);
+        }
+
+        return response()->json(['message' => CafeteriaPlan::ERROR]);
+    }
+
+    protected function getPocketsBudgetFromRequest(CafeteriaPlanRequest $request)
+    {
+        $pocketsBudgetAnnual = $request->input('pockets_budget_annual');
+        $pocketsBudgetMonthly = $request->input('pockets_budget_monthly');
+
+        return [$pocketsBudgetAnnual, $pocketsBudgetMonthly];
     }
 }

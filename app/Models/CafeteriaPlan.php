@@ -25,14 +25,14 @@ class CafeteriaPlan extends Model
     const CAFETERIA_BUDGET = 400000;
     const POCKET_BUDGET_LIMIT = 200000;
 
-    const A_POCKET = 'A';
-    const B_POCKET = 'B';
-    const C_POCKET = 'C';
+    const POCKET_1 = '1';
+    const POCKET_2 = '2';
+    const POCKET_3 = '3';
 
     const POCKETS = [
-        self::A_POCKET,
-        self::B_POCKET,
-        self::C_POCKET
+        self::POCKET_1,
+        self::POCKET_2,
+        self::POCKET_3
     ];
 
     const CURRENCY = 'HUF';
@@ -51,6 +51,11 @@ class CafeteriaPlan extends Model
         'November',
         'December'
     ];
+
+    const SAVE_SUCCESS = 'Success DB save!';
+    const XML_SUCCESS = 'Your XML file successfully generated!';
+    const ERROR = 'Error!';
+
     
 
 }
